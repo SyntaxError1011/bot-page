@@ -6,8 +6,9 @@ module.exports = {
   author: 'Deku (rest api)',
   async execute(senderId, args, pageAccessToken, sendMessage) {
     const query = args.join(' ');
+    if (!query) return;
     try {
-      const apiUrl = `https://deku-rest-api-3ijr.onrender.com/search/lyrics?q=${encodeURIComponent(query)}`;
+      const apiUrl = `https://deku-rest-api.gleeze.com/search/lyrics?q=${encodeURIComponent(query)}`;
       const response = await axios.get(apiUrl);
       const result = response.data.result;
 
