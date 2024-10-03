@@ -6,47 +6,52 @@ const { handlePostback } = require('./handles/handlePostback');
 
 const app = express();
 app.use(bodyParser.json());
+app.use(express.static('public'));
 
-const VERIFY_TOKEN = 'pagebot';
+const VERIFY_TOKEN = 'bot';
+let PAGE_ACCESS_TOKEN = '';
 
-const PAGE_ACCESS_TOKEN = fs.readFileSync('token.txt', 'utf8').trim();
+app.post('/set-token', (req, res) => {
+    PAGE_ACCESS_TOKEN = req.body.token;
+    fs.writeFileSync('token.txt', PAGE_ACCESS_TOKEN);
+    res.json({ message: 'Token saved successfully!' });
+});
 
 app.get('/webhook', (req, res) => {
-  const mode = req.query['hub.mode'];
-  const token = req.query['hub.verify_token'];
-  const challenge = req.query['hub.challenge'];
+    const mode = req.query['hub.mode'];
+    const token = req.query['hub.verify_token'];
+    const challenge = req.query['hub.challenge'];
 
-  if (mode && token) {
-    if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-      console.log('WEBHOOK_VERIFIED');
-      res.status(200).send(challenge);
-    } else {
-      res.sendStatus(403);
+    if (mode && token) {
+        if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+            console.log('WEBHOOK_VERIFIED');
+            res.status(200).send(challenge);
+        } else {
+            res.sendStatus(403);
+        }
     }
-  }
 });
 
 app.post('/webhook', (req, res) => {
-  const body = req.body;
+    const body = req.body;
 
-  if (body.object === 'page') {
-    body.entry.forEach(entry => {
-      entry.messaging.forEach(event => {
-        if (event.message) {
-          handleMessage(event, PAGE_ACCESS_TOKEN);
-        } else if (event.postback) {
-          handlePostback(event, PAGE_ACCESS_TOKEN);
-        }
-      });
-    });
-
-    res.status(200).send('EVENT_RECEIVED');
-  } else {
-    res.sendStatus(404);
-  }
+    if (body.object === 'page') {
+        body.entry.forEach(entry => {
+            entry.messaging.forEach(event => {
+                if (event.message) {
+                    handleMessage(event, PAGE_ACCESS_TOKEN);
+                } else if (event.postback) {
+                    handlePostback(event, PAGE_ACCESS_TOKEN);
+                }
+            });
+        });
+        res.status(200).send('EVENT_RECEIVED');
+    } else {
+        res.sendStatus(404);
+    }
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
